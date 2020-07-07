@@ -45,7 +45,10 @@ dependencies:
 - base >= 4.7 && < 5
 - rio >= 0.1.1.0
 - extensible >= 0.6
+- github >= 0.26
+- fallible
 - mix
+- mix-plugin-github
 
 library:
   source-dirs: src

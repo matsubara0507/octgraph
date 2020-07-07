@@ -5,6 +5,13 @@
 
 packages:
 - completed:
+    hackage: binary-instances-1.0.0.1@sha256:e234be994da675479a3661f050d4a1d53565c9ed7786d9a68b7a29ba8b54b5a7,2659
+    pantry-tree:
+      size: 1035
+      sha256: 6086ebb4c6f3d28200f295c36495227b3cd762ab1de3dafa36f6ce8674a23a90
+  original:
+    hackage: binary-instances-1.0.0.1
+- completed:
     hackage: extensible-0.8@sha256:45ca089909ae434329e4d05dc557be94ff04f24c43ff9b915bd90c0599c83211,2911
     pantry-tree:
       size: 2097
@@ -12,19 +19,26 @@ packages:
   original:
     hackage: extensible-0.8
 - completed:
-    hackage: membership-0@sha256:3a11d8fd53cb1a76bb9273e6c929bbf9d649f109714bf487abb3143be04ddc81,995
-    pantry-tree:
-      size: 408
-      sha256: 3b593e0d14e848e318e745555776ebb25210e5e3dec4fde5d3c08ab51ceddc62
-  original:
-    hackage: membership-0
-- completed:
     hackage: fallible-0.1.0@sha256:0e0032c34120a43bf1d446172162b546e36441c38f620afb24e9d447ed7ce6b6,1312
     pantry-tree:
       size: 369
       sha256: 7de6ccd3ae9fa01eafdb02afdd5a50f1f6babf48aeb31afa21d0329f0fdd19d1
   original:
     hackage: fallible-0.1.0
+- completed:
+    hackage: github-0.26@sha256:a9d4046325c3eb28cdc7bef2c3f5bb213328caeae0b7dce6f51de655f0bffaa1,7162
+    pantry-tree:
+      size: 7511
+      sha256: b71aab2984b268030c9e2617043575681134c1fe60dffbd5596e659c0a3e9aec
+  original:
+    hackage: github-0.26
+- completed:
+    hackage: membership-0@sha256:3a11d8fd53cb1a76bb9273e6c929bbf9d649f109714bf487abb3143be04ddc81,995
+    pantry-tree:
+      size: 408
+      sha256: 3b593e0d14e848e318e745555776ebb25210e5e3dec4fde5d3c08ab51ceddc62
+  original:
+    hackage: membership-0
 - completed:
     size: 8476
     subdir: mix
@@ -37,6 +51,19 @@ packages:
       sha256: 689bed307dc233a6c50e01f00295a079dc40a4291700646f3ca423d714ba35fc
   original:
     subdir: mix
+    url: https://github.com/matsubara0507/mix.hs/archive/a0b2b9394c340186c9a8a63808f0db1752ada4ae.tar.gz
+- completed:
+    size: 8476
+    subdir: mix-plugin-github
+    url: https://github.com/matsubara0507/mix.hs/archive/a0b2b9394c340186c9a8a63808f0db1752ada4ae.tar.gz
+    name: mix-plugin-github
+    version: 0.2.0
+    sha256: f879d5d044d8531814a8cd5bbda08ab2a513eb04a150e44526ea0f49961e38a1
+    pantry-tree:
+      size: 386
+      sha256: bf1584e7c1e67bbeb4cb377172f7910c95797d9fb023d372895e0f7727872075
+  original:
+    subdir: mix-plugin-github
     url: https://github.com/matsubara0507/mix.hs/archive/a0b2b9394c340186c9a8a63808f0db1752ada4ae.tar.gz
 snapshots:
 - completed:
