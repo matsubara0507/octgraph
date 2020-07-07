@@ -11,4 +11,5 @@ type Env = Record
    , "github" >: MixGitHub.Token
    , "config" >: Config
    , "cache"  >: FilePath
+   , "output" >: Maybe FilePath
    ]

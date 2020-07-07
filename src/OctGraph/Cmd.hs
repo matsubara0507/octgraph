@@ -3,19 +3,22 @@ module OctGraph.Cmd where
 import           RIO
 
 import           Data.Fallible
-import qualified Mix.Plugin.Logger as MixLogger
+import qualified Mix.Plugin.Logger  as MixLogger
+import           OctGraph.Cmd.Chart
 import           OctGraph.Config
 import           OctGraph.Env
-import           OctGraph.Pulls    as Pulls
+import           OctGraph.Pulls     as Pulls
 
 cmd :: RIO Env ()
 cmd = do
   repos <- asks (view #repositories . view #config)
-  forM_ repos $ \repo -> do
+  ps <- forM repos $ \repo -> do
     pulls <- fetchPullsWithCache repo
     MixLogger.logInfo (display repo)
     MixLogger.logInfo (display $ "     all pulls: " <> tshow (length pulls))
     MixLogger.logInfo (display $ "  closed pulls: " <> tshow (length $ filter isClosed pulls))
+    pure pulls
+  createChartFile (concat ps)
 
 showNotImpl :: MonadIO m => m ()
 showNotImpl = hPutBuilder stdout "not yet implement command.\n"

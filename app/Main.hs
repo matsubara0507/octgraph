@@ -27,6 +27,7 @@ main = withGetOpt' "[options] [input-file]" opts $ \r args usage -> do
         <: #version @= versionOpt
         <: #verbose @= verboseOpt
         <: #work    @= workOpt
+        <: #output  @= outputOpt
         <: nil
 
 type Options = Record
@@ -34,6 +35,7 @@ type Options = Record
    , "version" >: Bool
    , "verbose" >: Bool
    , "work"    >: FilePath
+   , "output"  >: Maybe FilePath
    ]
 
 helpOpt :: OptDescr' Bool
@@ -48,6 +50,9 @@ verboseOpt = optFlag ['v'] ["verbose"] "Enable verbose mode: verbosity level \"d
 workOpt :: OptDescr' FilePath
 workOpt = fromMaybe ".octgraph" <$> optLastArg ['w'] ["work"] "PATH" "Work directory PATH"
 
+outputOpt :: OptDescr' (Maybe FilePath)
+outputOpt = optLastArg ['o'] ["out"] "PATH" "Output png file PATH"
+
 runCmd :: Options -> Maybe FilePath -> IO ()
 runCmd opts path = do
   gToken <- liftIO $ fromString <$> getEnv "GH_TOKEN"
@@ -56,6 +61,7 @@ runCmd opts path = do
             <: #github <@=> MixGitHub.buildPlugin gToken
             <: #config <@=> readConfig (fromMaybe "./octgraph.yaml" path)
             <: #cache  <@=> pure (opts ^. #work </> "cache")
+            <: #output <@=> pure (opts ^. #output)
             <: nil
   Mix.run plugin cmd
   where
