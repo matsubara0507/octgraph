@@ -1,0 +1,70 @@
+name:                octgraph
+version:             0.1.0
+homepage:            https://github.com/matsubara0507/octgraph#readme
+license:             MIT
+author:              MATSUBARA Nobutada
+maintainer:          nobutada0507@gmail.com
+copyright:           MATSUBARA Nobutada
+category:            Web
+description:         Please see the README on GitHub at <https://github.com/matsubara0507/octgraph#readme>
+
+extra-source-files:
+- README.md
+- CHANGELOG.md
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wredundant-constraints
+- -optP-Wno-nonportable-include-path
+
+default-extensions:
+- NoImplicitPrelude
+
+- BlockArguments
+- ConstraintKinds
+- DataKinds
+- FlexibleContexts
+- FlexibleInstances
+- GeneralizedNewtypeDeriving
+- LambdaCase
+- MultiWayIf
+- NumericUnderscores
+- OverloadedLabels
+- OverloadedStrings
+- PolyKinds
+- RankNTypes
+- StandaloneDeriving
+- TypeFamilies
+- TypeOperators
+- TypeSynonymInstances
+
+dependencies:
+- base >= 4.7 && < 5
+- rio >= 0.1.1.0
+- extensible >= 0.6
+- mix
+
+library:
+  source-dirs: src
+
+executables:
+  octgraph:
+    main: Main.hs
+    source-dirs: app
+    dependencies:
+    - octgraph
+    - githash
+    - dotenv
+
+tests:
+  octgraph-test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+    - octgraph
+    - tasty
+    - tasty-hspec
+    other-modules: []
