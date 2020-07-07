@@ -26,6 +26,7 @@ columns: 80
 newline: native
 
 language_extensions:
+- BlockArguments
 - ConstraintKinds
 - DataKinds
 - FlexibleContexts
