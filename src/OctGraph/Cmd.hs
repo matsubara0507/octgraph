@@ -1,29 +1,34 @@
 module OctGraph.Cmd where
 
 import           RIO
-import qualified RIO.Text          as T
 
 import           Data.Fallible
 import qualified Mix.Plugin.Logger as MixLogger
+import           OctGraph.Config
 import           OctGraph.Env
-import           OctGraph.Pulls
+import           OctGraph.Pulls    as Pulls
 
 cmd :: RIO Env ()
-cmd = evalContT $ do
+cmd = do
   repos <- asks (view #repositories . view #config)
   forM_ repos $ \repo -> do
-    let (owner, name) = splitRepoName repo
-    pulls <- lift (fetchAllPulls owner name) !?= err
-    MixLogger.logInfo (display $ "   all pulls: " <> tshow (length pulls))
-    MixLogger.logInfo (display $ "closed pulls: " <> tshow (length $ filter isClosed pulls))
-  where
-    err txt = exit $ MixLogger.logError (display $ repo <> txt)
+    pulls <- fetchPullsWithCache repo
+    MixLogger.logInfo (display repo)
+    MixLogger.logInfo (display $ "     all pulls: " <> tshow (length pulls))
+    MixLogger.logInfo (display $ "  closed pulls: " <> tshow (length $ filter isClosed pulls))
 
 showNotImpl :: MonadIO m => m ()
 showNotImpl = hPutBuilder stdout "not yet implement command.\n"
 
-splitRepoName :: Text -> (Text, Text)
-splitRepoName repo =
-  case T.split (== '/') repo of
-    [owner, name] -> (owner, name)
-    _             -> ("", "")
+fetchPullsWithCache :: RepositoryPath -> RIO Env [PullRequest]
+fetchPullsWithCache repo = evalContT $ do
+  cachedPulls <- lift $ Pulls.readCache repo
+  pulls <- lift (fetchPullsWith cachedPulls) !?= err
+  when (length pulls /= length cachedPulls) $
+    lift (Pulls.writeCache repo pulls)
+  pure pulls
+  where
+    err txt = exit $ MixLogger.logError (display $ repo <> txt) >> pure []
+
+    fetchPullsWith []     = fetchAllPulls repo
+    fetchPullsWith cached = fmap (flip mergePulls cached) <$> fetchLatestPulls repo

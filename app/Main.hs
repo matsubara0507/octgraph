@@ -2,6 +2,7 @@ module Main where
 
 import           Paths_octgraph         (version)
 import           RIO
+import           RIO.FilePath           ((</>))
 
 import           Configuration.Dotenv   (defaultConfig, loadFile)
 import           Data.Extensible
@@ -25,12 +26,14 @@ main = withGetOpt' "[options] [input-file]" opts $ \r args usage -> do
     opts = #help    @= helpOpt
         <: #version @= versionOpt
         <: #verbose @= verboseOpt
+        <: #work    @= workOpt
         <: nil
 
 type Options = Record
   '[ "help"    >: Bool
    , "version" >: Bool
    , "verbose" >: Bool
+   , "work"    >: FilePath
    ]
 
 helpOpt :: OptDescr' Bool
@@ -42,6 +45,9 @@ versionOpt = optFlag [] ["version"] "Show version"
 verboseOpt :: OptDescr' Bool
 verboseOpt = optFlag ['v'] ["verbose"] "Enable verbose mode: verbosity level \"debug\""
 
+workOpt :: OptDescr' FilePath
+workOpt = fromMaybe ".octgraph" <$> optLastArg ['w'] ["work"] "PATH" "Work directory PATH"
+
 runCmd :: Options -> Maybe FilePath -> IO ()
 runCmd opts path = do
   gToken <- liftIO $ fromString <$> getEnv "GH_TOKEN"
@@ -49,6 +55,7 @@ runCmd opts path = do
              $ #logger <@=> MixLogger.buildPlugin logOpts
             <: #github <@=> MixGitHub.buildPlugin gToken
             <: #config <@=> readConfig (fromMaybe "./octgraph.yaml" path)
+            <: #cache  <@=> pure (opts ^. #work </> "cache")
             <: nil
   Mix.run plugin cmd
   where

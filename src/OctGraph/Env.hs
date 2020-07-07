@@ -10,4 +10,5 @@ type Env = Record
   '[ "logger" >: LogFunc
    , "github" >: MixGitHub.Token
    , "config" >: Config
+   , "cache"  >: FilePath
    ]
