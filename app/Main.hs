@@ -11,6 +11,7 @@ import           Mix
 import qualified Mix.Plugin.GitHub      as MixGitHub
 import           Mix.Plugin.Logger      as MixLogger
 import           OctGraph.Cmd
+import           OctGraph.Config
 import           System.Environment     (getEnv)
 import qualified Version
 
@@ -42,11 +43,12 @@ verboseOpt :: OptDescr' Bool
 verboseOpt = optFlag ['v'] ["verbose"] "Enable verbose mode: verbosity level \"debug\""
 
 runCmd :: Options -> Maybe FilePath -> IO ()
-runCmd opts _path = do
+runCmd opts path = do
   gToken <- liftIO $ fromString <$> getEnv "GH_TOKEN"
   let plugin = hsequence
              $ #logger <@=> MixLogger.buildPlugin logOpts
             <: #github <@=> MixGitHub.buildPlugin gToken
+            <: #config <@=> readConfig (fromMaybe "./octgraph.yaml" path)
             <: nil
   Mix.run plugin cmd
   where
