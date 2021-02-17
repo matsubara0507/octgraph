@@ -1,12 +1,12 @@
 module OctGraph.Cmd.Chart where
 
 import           RIO
-import qualified RIO.Map                                as Map
+import qualified RIO.Map                                   as Map
 import           RIO.Time
 
-import           Graphics.Rendering.Chart.Backend.Cairo
-import           Graphics.Rendering.Chart.Easy          hiding (view, (^.))
-import qualified Mix.Plugin.Logger                      as MixLogger
+import           Graphics.Rendering.Chart.Backend.Diagrams
+import           Graphics.Rendering.Chart.Easy             hiding (view, (^.))
+import qualified Mix.Plugin.Logger                         as MixLogger
 import           OctGraph.Env
 import           OctGraph.Pulls
 

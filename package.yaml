@@ -46,7 +46,7 @@ dependencies:
 - rio >= 0.1.1.0
 - aeson
 - Chart
-- Chart-cairo
+- Chart-diagrams
 - extensible >= 0.6
 - github >= 0.26
 - fallible

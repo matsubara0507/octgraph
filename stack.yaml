@@ -1,17 +1,15 @@
-resolver: lts-16.4
+resolver: lts-16.31
 packages:
 - '.'
 extra-deps:
 - binary-instances-1.0.0.1
-- Chart-cairo-1.9.3
-- cairo-0.13.8.1
-- extensible-0.8
+- extensible-0.8.1
 - fallible-0.1.0
 - github-0.26
-- gtk2hs-buildtools-0.13.8.0
+- incremental-0.3.1
 - membership-0
 - github: matsubara0507/mix.hs
-  commit: a0b2b9394c340186c9a8a63808f0db1752ada4ae
+  commit: 75714be080db16f6a4f9d0a22e86947ffcdadc57
   subdirs:
   - mix
   - mix-plugin-github
