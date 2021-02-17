@@ -2,9 +2,10 @@ module Main where
 
 import           Paths_octgraph         (version)
 import           RIO
+import           RIO.Directory          (doesFileExist, getHomeDirectory)
 import           RIO.FilePath           ((</>))
 
-import           Configuration.Dotenv   (defaultConfig, loadFile)
+import           Configuration.Dotenv   (Config (..), defaultConfig, loadFile)
 import           Data.Extensible
 import           Data.Extensible.GetOpt
 import           GetOpt                 (withGetOpt')
@@ -18,11 +19,15 @@ import qualified Version
 
 main :: IO ()
 main = withGetOpt' "[options] [input-file]" opts $ \r args usage -> do
-  _ <- tryIO $ loadFile defaultConfig
+  homeDir <- getHomeDirectory
+  _ <- loadEnvFileIfExist defaultConfig
+  _ <- loadEnvFileIfExist $ defaultConfig { configPath = [homeDir <> "/.env"] }
   if | r ^. #help    -> hPutBuilder stdout (fromString usage)
      | r ^. #version -> hPutBuilder stdout (Version.build version <> "\n")
      | otherwise     -> runCmd r (listToMaybe args)
   where
+    loadEnvFileIfExist conf =
+      whenM (and <$> mapM doesFileExist (configPath conf)) (void $ loadFile conf)
     opts = #help    @= helpOpt
         <: #version @= versionOpt
         <: #verbose @= verboseOpt
