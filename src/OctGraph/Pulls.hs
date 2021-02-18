@@ -39,15 +39,15 @@ fetchPulls' count repo = do
     count
   pure $ case resp of
     Left _      -> Left "cannot fetch pulls"
-    Right pulls -> Right (fmap toPullRequest $ V.toList pulls)
+    Right pulls -> Right (toPullRequest <$> V.toList pulls)
   where
     (org, name) = splitRepoName repo
 
 toPullRequest :: GitHub.SimplePullRequest -> PullRequest
 toPullRequest pull
-    = #id         @= (GitHub.unIssueNumber $ GitHub.simplePullRequestNumber pull)
-   <: #created_at @= (GitHub.simplePullRequestCreatedAt pull)
-   <: #closed_at  @= (GitHub.simplePullRequestClosedAt pull)
+    = #id         @= GitHub.unIssueNumber (GitHub.simplePullRequestNumber pull)
+   <: #created_at @= GitHub.simplePullRequestCreatedAt pull
+   <: #closed_at  @= GitHub.simplePullRequestClosedAt pull
    <: nil
 
 isClosed :: PullRequest -> Bool

@@ -34,4 +34,4 @@ fetchPullsWithCache repo = evalContT $ do
     err txt = exit $ MixLogger.logError (display $ repo <> txt) >> pure []
 
     fetchPullsWith []     = fetchAllPulls repo
-    fetchPullsWith cached = fmap (flip mergePulls cached) <$> fetchLatestPulls repo
+    fetchPullsWith cached = fmap (`mergePulls` cached) <$> fetchLatestPulls repo

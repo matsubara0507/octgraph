@@ -14,8 +14,9 @@ withGetOpt' :: MonadIO m => String -- ^ Non-option usage
   -> RecordOf (OptionDescr h) xs -- ^ option desciptors
   -> (RecordOf h xs -> [String] -> String -> m a) -- ^ the result, non-option arguments and usage
   -> m a
-withGetOpt' nonOptUsage descs k =
-  getOptRecord descs <$> liftIO getArgs >>= \case
+withGetOpt' nonOptUsage descs k = do
+  args <- liftIO getArgs
+  case getOptRecord descs args of
     (r, xs, [],  usage) -> liftIO (mkUsage usage) >>= k r xs
     (_, _, errs, usage) -> liftIO $ do
       mapM_ (hPutStrLn stderr) errs
