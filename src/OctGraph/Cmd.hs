@@ -14,7 +14,7 @@ import           OctGraph.Pulls        as Pulls
 import           OctGraph.Pulls.Review as Review
 
 data Cmd
-    = PullRequestFreqency
+    = PullRequestFrequency
     | ReviewFrequency
     deriving (Show, Eq)
 
@@ -22,8 +22,8 @@ run :: Cmd -> RIO Env ()
 run cmd = do
   ps <- fetchPulls =<< asks (view #repositories . view #config)
   case cmd of
-    PullRequestFreqency ->
-      createPullRequestFreqency (concat $ Map.elems ps)
+    PullRequestFrequency ->
+      createPullRequestFrequency (concat $ Map.elems ps)
     ReviewFrequency -> do
       rs <- fetchReviews ps
       createReviewFrequency (concat $ concatMap Map.elems $ Map.elems rs)
@@ -55,7 +55,7 @@ fetchPullsWithCache repo = evalContT $ do
     fetchPullsWith []     = fetchAllPulls repo
     fetchPullsWith cached = fmap (`mergePulls` cached) <$> fetchLatestPulls repo
 
-fetchReviews :: PullRequests -> RIO Env (Map RepositoryPath  Reviews)
+fetchReviews :: PullRequests -> RIO Env (Map RepositoryPath Reviews)
 fetchReviews ps = fmap Map.fromList . forM (Map.toList ps) $ \(repo, pulls) ->do
   reviews <- fetchReviewsWithCache repo pulls
   MixLogger.logInfo (display repo)

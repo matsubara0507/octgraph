@@ -12,8 +12,8 @@ import           OctGraph.Pulls                (PullRequest)
 import           OctGraph.Pulls.Review         (Review)
 import           Witherable                    (ordNubOn)
 
-createPullRequestFreqency :: [PullRequest] -> RIO Env ()
-createPullRequestFreqency pulls = createOutputFileWith $ do
+createPullRequestFrequency :: [PullRequest] -> RIO Env ()
+createPullRequestFrequency pulls = createOutputFileWith $ do
   layout_title .= "PullRequests Open Frequency"
   plot (line "open" [[ (d, length ps) | (d, ps) <- Map.toList pulls' ]])
   where

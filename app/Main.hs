@@ -24,7 +24,7 @@ main = withGetOpt' "[options] (pulls|reviews)" opts $ \r args usage -> do
   _ <- loadEnvFileIfExist $ defaultConfig { configPath = [homeDir <> "/.env"] }
   if | r ^. #help          -> hPutBuilder stdout (fromString usage)
      | r ^. #version       -> hPutBuilder stdout (Version.build version <> "\n")
-     | args == ["pulls"]   -> runCmd r PullRequestFreqency
+     | args == ["pulls"]   -> runCmd r PullRequestFrequency
      | args == ["reviews"] -> runCmd r ReviewFrequency
      | otherwise           -> hPutBuilder stdout (fromString usage)
   where
