@@ -53,6 +53,7 @@ dependencies:
 - fallible
 - mix
 - mix-plugin-github
+- witherable
 - yaml
 
 library:

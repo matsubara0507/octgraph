@@ -8,6 +8,7 @@ import qualified Data.Yaml       as Y
 
 type Config = Record
   '[ "repositories" >: [RepositoryPath]
+   , "reviews"      >: Maybe ReviewsConfig
    ]
 
 readConfig :: MonadIO m => FilePath -> m Config
@@ -20,3 +21,10 @@ splitRepoName repo =
   case T.split (== '/') repo of
     [owner, name] -> (owner, name)
     _             -> ("", "")
+
+type ReviewsConfig = Record
+  '[ "user" >: Maybe Text
+   ]
+
+reviewFilerUser :: Config -> Maybe Text
+reviewFilerUser c = view #user =<< c ^. #reviews

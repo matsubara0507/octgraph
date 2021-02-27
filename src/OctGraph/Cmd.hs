@@ -23,10 +23,10 @@ run cmd = do
   ps <- fetchPulls =<< asks (view #repositories . view #config)
   case cmd of
     PullRequestFreqency ->
-      createChartFile (concat $ Map.elems ps)
+      createPullRequestFreqency (concat $ Map.elems ps)
     ReviewFrequency -> do
-      _ <- fetchReviews ps
-      pure ()
+      rs <- fetchReviews ps
+      createReviewFrequency (concat $ concatMap Map.elems $ Map.elems rs)
 
 showNotImpl :: MonadIO m => m ()
 showNotImpl = hPutBuilder stdout "not yet implement command.\n"

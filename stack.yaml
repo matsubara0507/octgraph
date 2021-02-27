@@ -7,12 +7,16 @@ extra-deps:
 - fallible-0.1.0
 - github-0.26
 - incremental-0.3.1
+- indexed-traversable-0.1.1
+- indexed-traversable-instances-0.1
 - membership-0
 - github: matsubara0507/mix.hs
   commit: 75714be080db16f6a4f9d0a22e86947ffcdadc57
   subdirs:
   - mix
   - mix-plugin-github
+- unordered-containers-0.2.13.0
+- witherable-0.4.1
 
 docker:
   repo: matsubara0507/stack-build
