@@ -12,19 +12,21 @@ import           GetOpt                 (withGetOpt')
 import           Mix
 import qualified Mix.Plugin.GitHub      as MixGitHub
 import           Mix.Plugin.Logger      as MixLogger
-import           OctGraph.Cmd
+import           OctGraph.Cmd           as OctGraph
 import           OctGraph.Config
 import           System.Environment     (getEnv)
 import qualified Version
 
 main :: IO ()
-main = withGetOpt' "[options] [input-file]" opts $ \r args usage -> do
+main = withGetOpt' "[options] (pulls|reviews)" opts $ \r args usage -> do
   homeDir <- getHomeDirectory
   _ <- loadEnvFileIfExist defaultConfig
   _ <- loadEnvFileIfExist $ defaultConfig { configPath = [homeDir <> "/.env"] }
-  if | r ^. #help    -> hPutBuilder stdout (fromString usage)
-     | r ^. #version -> hPutBuilder stdout (Version.build version <> "\n")
-     | otherwise     -> runCmd r (listToMaybe args)
+  if | r ^. #help          -> hPutBuilder stdout (fromString usage)
+     | r ^. #version       -> hPutBuilder stdout (Version.build version <> "\n")
+     | args == ["pulls"]   -> runCmd r PullRequestFreqency
+     | args == ["reviews"] -> runCmd r ReviewFrequency
+     | otherwise           -> hPutBuilder stdout (fromString usage)
   where
     loadEnvFileIfExist conf =
       whenM (and <$> mapM doesFileExist (configPath conf)) (void $ loadFile conf)
@@ -33,6 +35,7 @@ main = withGetOpt' "[options] [input-file]" opts $ \r args usage -> do
         <: #verbose @= verboseOpt
         <: #work    @= workOpt
         <: #output  @= outputOpt
+        <: #config  @= configOpt
         <: nil
 
 type Options = Record
@@ -41,6 +44,7 @@ type Options = Record
    , "verbose" >: Bool
    , "work"    >: FilePath
    , "output"  >: Maybe FilePath
+   , "config"  >: FilePath
    ]
 
 helpOpt :: OptDescr' Bool
@@ -58,16 +62,19 @@ workOpt = fromMaybe ".octgraph" <$> optLastArg ['w'] ["work"] "PATH" "Work direc
 outputOpt :: OptDescr' (Maybe FilePath)
 outputOpt = optLastArg ['o'] ["out"] "PATH" "Output png file PATH"
 
-runCmd :: Options -> Maybe FilePath -> IO ()
-runCmd opts path = do
+configOpt :: OptDescr' FilePath
+configOpt = fromMaybe "./octgraph.yaml" <$> optLastArg ['c'] ["config"] "PATH" "Configuration PATH (default: ./octgraph.yaml"
+
+runCmd :: Options -> Cmd -> IO ()
+runCmd opts subcmd = do
   gToken <- liftIO $ fromString <$> getEnv "GH_TOKEN"
   let plugin = hsequence
              $ #logger <@=> MixLogger.buildPlugin logOpts
             <: #github <@=> MixGitHub.buildPlugin gToken
-            <: #config <@=> readConfig (fromMaybe "./octgraph.yaml" path)
+            <: #config <@=> readConfig (opts ^. #config)
             <: #cache  <@=> pure (opts ^. #work </> "cache")
             <: #output <@=> pure (opts ^. #output)
             <: nil
-  Mix.run plugin cmd
+  Mix.run plugin $ OctGraph.run subcmd
   where
     logOpts = #handle @= stdout <: #verbose @= (opts ^. #verbose) <: nil

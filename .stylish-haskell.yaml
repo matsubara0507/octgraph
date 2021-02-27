@@ -40,6 +40,7 @@ language_extensions:
 - PolyKinds
 - RankNTypes
 - StandaloneDeriving
+- TupleSections
 - TypeFamilies
 - TypeOperators
 - TypeSynonymInstances

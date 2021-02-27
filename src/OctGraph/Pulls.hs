@@ -1,23 +1,23 @@
 module OctGraph.Pulls where
 
 import           RIO
-import           RIO.Directory     (createDirectoryIfMissing, doesFileExist)
-import           RIO.FilePath      (dropFileName, (<.>), (</>))
+import           RIO.FilePath      ((<.>), (</>))
 import qualified RIO.List          as L
 import qualified RIO.Text          as T
 import           RIO.Time
 import qualified RIO.Vector        as V
 
-import qualified Data.Aeson        as J
 import           Data.Extensible
 import qualified GitHub
 import qualified Mix.Plugin.GitHub as MixGitHub
+import qualified Mix.Plugin.Logger as MixLogger
 import           OctGraph.Config   (RepositoryPath, splitRepoName)
 import           OctGraph.Env
 
 type PullRequest = Record
   '[ "id"         >: Int
    , "created_at" >: UTCTime
+   , "updated_at" >: UTCTime
    , "closed_at"  >: Maybe UTCTime
    ]
 
@@ -32,6 +32,7 @@ fetchAllPulls = fetchPulls' GitHub.FetchAll
 fetchPulls' ::
   GitHub.FetchCount -> RepositoryPath -> RIO Env (Either Text [PullRequest])
 fetchPulls' count repo = do
+  MixLogger.logDebug (display $ "fetch pulls: " <> repo <> " (" <> tshow count <> ")")
   resp <- MixGitHub.fetch $ GitHub.pullRequestsForR
     (GitHub.mkName Proxy org)
     (GitHub.mkName Proxy name)
@@ -47,33 +48,18 @@ toPullRequest :: GitHub.SimplePullRequest -> PullRequest
 toPullRequest pull
     = #id         @= GitHub.unIssueNumber (GitHub.simplePullRequestNumber pull)
    <: #created_at @= GitHub.simplePullRequestCreatedAt pull
+   <: #updated_at @= GitHub.simplePullRequestUpdatedAt pull
    <: #closed_at  @= GitHub.simplePullRequestClosedAt pull
    <: nil
 
 isClosed :: PullRequest -> Bool
 isClosed = isJust . view #closed_at
 
-
 mergePulls :: [PullRequest] -> [PullRequest] -> [PullRequest]
 mergePulls pulls =
   L.sortBy (\x y -> (x ^. #id) `compare` (y ^. #id))
     . L.nubBy (\x y -> x ^. #id == y ^. #id)
     . (pulls ++)
-
-writeCache :: RepositoryPath -> [PullRequest] -> RIO Env ()
-writeCache repo pulls = do
-  path <- cachePath repo
-  createDirectoryIfMissing True (dropFileName path)
-  liftIO $ J.encodeFile path pulls
-
-readCache :: RepositoryPath -> RIO Env [PullRequest]
-readCache repo = do
-  path    <- cachePath repo
-  isExist <- doesFileExist path
-  if isExist then
-    fromMaybe [] <$> liftIO (J.decodeFileStrict path)
-  else
-    pure []
 
 cachePath :: RepositoryPath -> RIO Env FilePath
 cachePath repo = (</> "pulls" </> T.unpack repo <.> "json") <$> asks (view #cache)
