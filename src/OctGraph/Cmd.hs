@@ -1,7 +1,6 @@
 module OctGraph.Cmd where
 
 import           RIO
-import qualified RIO.List              as L
 import qualified RIO.Map               as Map
 
 import           Data.Fallible
@@ -26,7 +25,7 @@ run cmd = do
       createPullRequestFrequency (concat $ Map.elems ps)
     ReviewFrequency -> do
       rs <- fetchReviews ps
-      createReviewFrequency (concat $ concatMap Map.elems $ Map.elems rs)
+      createReviewFrequency (concatMap (view #reviews) $ concatMap Map.elems $ Map.elems rs)
 
 showNotImpl :: MonadIO m => m ()
 showNotImpl = hPutBuilder stdout "not yet implement command.\n"
@@ -55,20 +54,19 @@ fetchPullsWithCache repo = evalContT $ do
     fetchPullsWith []     = fetchAllPulls repo
     fetchPullsWith cached = fmap (`mergePulls` cached) <$> fetchLatestPulls repo
 
-fetchReviews :: PullRequests -> RIO Env (Map RepositoryPath Reviews)
+fetchReviews :: PullRequests -> RIO Env (Map RepositoryPath (Map Int PullRequestReviews))
 fetchReviews ps = fmap Map.fromList . forM (Map.toList ps) $ \(repo, pulls) ->do
-  reviews <- fetchReviewsWithCache repo pulls
+  rs <- fetchReviewsWithCache repo pulls
   MixLogger.logInfo (display repo)
-  MixLogger.logInfo (display $ "  all reviews: " <> tshow (sum $ fmap length reviews))
-  pure (repo, reviews)
+  MixLogger.logInfo (display $ "  all reviews: " <> tshow (sum $ fmap (length . view #reviews) rs))
+  pure (repo, rs)
 
-fetchReviewsWithCache :: RepositoryPath -> [PullRequest] -> RIO Env Reviews
+fetchReviewsWithCache :: RepositoryPath -> [PullRequest] -> RIO Env (Map Int PullRequestReviews)
 fetchReviewsWithCache repo pulls = evalContT $ do
   path <- lift $ Review.cachePath repo
   MixLogger.logDebug (fromString $ "read cache: " <> path)
   cachedReviews <- lift $ readCache path
-  rs <- fmap Map.fromList $ forM (take 100 $ reverse pulls) $ \pull -> do
-    threadDelay 1_000_000
+  rs <- fmap Map.fromList $ forM (take 100 $ reverse pulls) $ \pull ->
     lift (fetchReviewsWith cachedReviews pull) !?= err
   MixLogger.logDebug (fromString $ "write cache: " <> path)
   lift (writeCache path rs)
@@ -76,18 +74,17 @@ fetchReviewsWithCache repo pulls = evalContT $ do
   where
     err txt = exit $ MixLogger.logError (display $ repo <> txt) >> pure mempty
 
-    fetchReviewsWith :: Map Int [Review] -> PullRequest -> RIO Env (Either Text (Int, [Review]))
+    fetchReviewsWith :: Map Int PullRequestReviews -> PullRequest -> RIO Env (Either Text (Int, PullRequestReviews))
     fetchReviewsWith cache pull = fmap (pull ^. #id,) <$>
       case Map.lookup (pull ^. #id) cache of
-        Nothing     -> Review.fetchAllReviews repo pull
-        Just cached -> do
-          if Pulls.isClosed pull then
-            pure $ Right cached
-          else
-            case L.maximumByMaybe (compare `on` view #created_at) cached of
-              Nothing     -> Review.fetchAllReviews repo pull
-              Just latest ->
-                if pull ^. #updated_at > latest ^. #created_at then
-                  fmap (`mergeReviews` cached) <$> Review.fetchLatestReviews repo pull
-                else
+        Nothing     -> do
+          threadDelay 1_000_000
+          fmap (toPullRequestReviews pull) <$> Review.fetchAllReviews repo pull
+        Just cached ->
+          if | Pulls.isClosed pull ->
+                  pure $ Right cached
+             | pull ^. #updated_at > cached ^. #updated_at -> do
+                  threadDelay 1_000_000
+                  fmap (toPullRequestReviews pull . mergeReviews (cached ^. #reviews)) <$> Review.fetchLatestReviews repo pull
+             | otherwise ->
                   pure $ Right cached

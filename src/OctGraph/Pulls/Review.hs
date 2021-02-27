@@ -19,14 +19,18 @@ import           OctGraph.Config                       (RepositoryPath,
 import           OctGraph.Env
 import           OctGraph.Pulls                        (PullRequest)
 
+type PullRequestReviews = Record
+  '[ "id" >: Int
+   , "updated_at" >: UTCTime
+   , "reviews" >: [Review]
+   ]
+
 type Review = Record
    '[ "id" >: Int
     , "pull" >: Int
     , "user" >: Text
     , "created_at" >: UTCTime
     ]
-
-type Reviews = Map Int [Review]
 
 fetchLatestReviews, fetchAllReviews :: RepositoryPath -> PullRequest -> RIO Env (Either Text [Review])
 fetchLatestReviews = fetchReviews' (GitHub.FetchAtLeast 100)
@@ -52,6 +56,13 @@ toReview pr review
    <: #pull       @= (pr ^. #id)
    <: #user       @= GitHub.untagName (GitHub.simpleUserLogin $ GitHub.reviewUser review)
    <: #created_at @= GitHub.reviewSubmittedAt review
+   <: nil
+
+toPullRequestReviews :: PullRequest -> [Review] -> PullRequestReviews
+toPullRequestReviews pull reviews
+    = #id @= (pull ^. #id)
+   <: #updated_at @= (pull ^. #updated_at)
+   <: #reviews @= reviews
    <: nil
 
 mergeReviews :: [Review] -> [Review] -> [Review]
