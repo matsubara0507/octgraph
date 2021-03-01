@@ -11,9 +11,10 @@ import           Data.Extensible.GetOpt
 import           GetOpt                 (withGetOpt')
 import           Mix
 import qualified Mix.Plugin.GitHub      as MixGitHub
-import           Mix.Plugin.Logger      as MixLogger
+import           Mix.Plugin.Logger      as MixLogger (buildPlugin)
 import           OctGraph.Cmd           as OctGraph
 import           OctGraph.Config
+import           OctGraph.Env           as OctGraph
 import           System.Environment     (getEnv)
 import qualified Version
 
@@ -36,6 +37,8 @@ main = withGetOpt' "[options] (pulls|reviews)" opts $ \r args usage -> do
         <: #work    @= workOpt
         <: #output  @= outputOpt
         <: #config  @= configOpt
+        <: #start   @= startOpt
+        <: #end     @= endOpt
         <: nil
 
 type Options = Record
@@ -45,6 +48,8 @@ type Options = Record
    , "work"    >: FilePath
    , "output"  >: Maybe FilePath
    , "config"  >: FilePath
+   , "start"   >: Maybe String
+   , "end"     >: Maybe String
    ]
 
 helpOpt :: OptDescr' Bool
@@ -65,6 +70,12 @@ outputOpt = optLastArg ['o'] ["out"] "PATH" "Output png file PATH"
 configOpt :: OptDescr' FilePath
 configOpt = fromMaybe "./octgraph.yaml" <$> optLastArg ['c'] ["config"] "PATH" "Configuration PATH (default: ./octgraph.yaml"
 
+startOpt :: OptDescr' (Maybe String)
+startOpt = optLastArg [] ["start"] "YYYYMMDD" "Start time for filter"
+
+endOpt :: OptDescr' (Maybe String)
+endOpt = optLastArg [] ["end"] "YYYYMMDD" "end time for filter"
+
 runCmd :: Options -> Cmd -> IO ()
 runCmd opts subcmd = do
   gToken <- liftIO $ fromString <$> getEnv "GH_TOKEN"
@@ -74,6 +85,7 @@ runCmd opts subcmd = do
             <: #config <@=> readConfig (opts ^. #config)
             <: #cache  <@=> pure (opts ^. #work </> "cache")
             <: #output <@=> pure (opts ^. #output)
+            <: #filter <@=> pure (OctGraph.toFilter $ shrink opts)
             <: nil
   Mix.run plugin $ OctGraph.run subcmd
   where

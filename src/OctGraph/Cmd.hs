@@ -66,7 +66,9 @@ fetchReviewsWithCache repo pulls = evalContT $ do
   path <- lift $ Review.cachePath repo
   MixLogger.logDebug (fromString $ "read cache: " <> path)
   cachedReviews <- lift $ readCache path
-  rs <- fmap Map.fromList $ forM (take 100 $ reverse pulls) $ \pull ->
+  pulls' <- lift (filterPullRequests $ reverse pulls)
+  MixLogger.logDebug (display $ "filtered: " <> tshow (length pulls'))
+  rs <- fmap Map.fromList $ forM pulls' $ \pull ->
     lift (fetchReviewsWith cachedReviews pull) !?= err
   MixLogger.logDebug (fromString $ "write cache: " <> path)
   lift (writeCache path rs)
@@ -88,3 +90,12 @@ fetchReviewsWithCache repo pulls = evalContT $ do
                   fmap (toPullRequestReviews pull . mergeReviews (cached ^. #reviews)) <$> Review.fetchLatestReviews repo pull
              | otherwise ->
                   pure $ Right cached
+
+filterPullRequests :: [PullRequest] -> RIO Env [PullRequest]
+filterPullRequests pulls = do
+  filterConfig <- asks (view #filter)
+  MixLogger.logDebug (display $ "filter: " <> tshow (filterConfig ^. #start) <> " ~ " <> tshow (filterConfig ^. #end))
+  pure
+    $ maybe id (\start -> filter $ \pull -> pull ^. #created_at >= start) (filterConfig ^. #start)
+    $ maybe id (\end   -> filter $ \pull -> pull ^. #created_at <= end)   (filterConfig ^. #end)
+    pulls
