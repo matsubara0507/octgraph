@@ -44,9 +44,9 @@ fetchReviews' count repo pr = do
     (GitHub.mkName Proxy name)
     (GitHub.IssueNumber $ pr ^. #id)
     count
-  pure $ case resp of
-    Left _        -> Left "cannot fetch reviews"
-    Right reviews -> Right (toReview pr <$> V.toList reviews)
+  case resp of
+    Left err      -> MixLogger.logError (displayShow err) $> Left " cannot fetch reviews"
+    Right reviews -> pure $ Right (toReview pr <$> V.toList reviews)
   where
     (org, name) = splitRepoName repo
 

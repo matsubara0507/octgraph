@@ -38,9 +38,9 @@ fetchPulls' count repo = do
     (GitHub.mkName Proxy name)
     (GitHub.sortByCreated <> GitHub.stateAll)
     count
-  pure $ case resp of
-    Left _      -> Left "cannot fetch pulls"
-    Right pulls -> Right (toPullRequest <$> V.toList pulls)
+  case resp of
+    Left err    -> MixLogger.logError (displayShow err) $> Left "cannot fetch pulls"
+    Right pulls -> pure $ Right (toPullRequest <$> V.toList pulls)
   where
     (org, name) = splitRepoName repo
 
