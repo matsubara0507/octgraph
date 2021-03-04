@@ -63,16 +63,16 @@ fetchReviews ps = fmap Map.fromList . forM (Map.toList ps) $ \(repo, pulls) ->do
 
 fetchReviewsWithCache :: RepositoryPath -> [PullRequest] -> RIO Env (Map Int PullRequestReviews)
 fetchReviewsWithCache repo pulls = evalContT $ do
-  path <- lift $ Review.cachePath repo
-  MixLogger.logDebug (fromString $ "read cache: " <> path)
-  cachedReviews <- lift $ readCache path
   pulls' <- lift (filterPullRequests $ reverse pulls)
   MixLogger.logDebug (display $ "filtered: " <> tshow (length pulls'))
-  rs <- fmap Map.fromList $ forM pulls' $ \pull ->
-    lift (fetchReviewsWith cachedReviews pull) !?= err
-  MixLogger.logDebug (fromString $ "write cache: " <> path)
-  lift (writeCache path rs)
-  pure rs
+  fmap Map.fromList $ forM pulls' $ \pull -> do
+    path <- lift $ Review.cachePath repo pull
+    MixLogger.logDebug (fromString $ "read cache: " <> path)
+    cachedReviews <- lift $ readCache path
+    rs <- lift (fetchReviewsWith cachedReviews pull) !?= err
+    MixLogger.logDebug (fromString $ "write cache: " <> path)
+    lift (writeCache path rs)
+    pure rs
   where
     err txt = exit $ MixLogger.logError (display $ repo <> txt) >> pure mempty
 

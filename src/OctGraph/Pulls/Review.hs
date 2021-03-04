@@ -71,5 +71,5 @@ mergeReviews reviews =
     . L.nubBy (\x y -> x ^. #id == y ^. #id)
     . (reviews ++)
 
-cachePath :: RepositoryPath -> RIO Env FilePath
-cachePath repo = (</> "reviews" </> T.unpack repo <.> "json") <$> asks (view #cache)
+cachePath :: RepositoryPath -> PullRequest -> RIO Env FilePath
+cachePath repo pr = (</> "reviews" </> T.unpack repo </> show (pr ^. #id) <.> "json") <$> asks (view #cache)
